@@ -1,0 +1,5 @@
+SELECT 
+   DISTINCT user_id
+FROM reports.user_tag_facts
+WHERE tag_name = 'aml-kyc-pep'
+ORDER BY 1;
