@@ -1,0 +1,7 @@
+SELECT
+    DISTINCT meta_investigations_ops_review."USER_PROFILE_ID"  AS "meta_investigations_ops_review.user_profile_id"
+FROM
+    REPORTS.META_EDD_INVESTIGATIONS_OPS_REVIEW AS meta_investigations_ops_review
+WHERE (meta_investigations_ops_review."EDD_RULE" ) = 'ConfirmedPepRule' AND 
+       ((( meta_investigations_ops_review."CASE_CREATION_TIME"  ) >= ((DATEADD('month', -12, DATE_TRUNC('month', CURRENT_DATE())))) AND 
+       ( meta_investigations_ops_review."CASE_CREATION_TIME"  ) < ((DATEADD('month', 12, DATEADD('month', -12, DATE_TRUNC('month', CURRENT_DATE())))))));
