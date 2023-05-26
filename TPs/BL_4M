@@ -1,0 +1,19 @@
+SELECT
+    edd."USER_PROFILE_ID"  AS "user profile id",
+    edd."CASE_ID"  AS "case id",
+    edd."CASE_CREATION_TIME" AS "case creation time",
+    COUNT(DISTINCT edd."REVIEW_ID")  AS "TPs"
+FROM
+    REPORTS.META_EDD_INVESTIGATIONS_OPS_REVIEW AS edd
+LEFT JOIN TRANSFER.TRANSFER AS t
+    ON edd.USER_PROFILE_ID = t.USER_PROFILE_ID
+LEFT JOIN FX.WORK_ITEM as wi
+    ON t.id = wi.REQUEST_ID
+WHERE (edd."EDD_RULE" Like '%BlacklistedCountryRule%'
+       OR (type = 'AML_REVIEW' AND ((wi.DATE_CREATED >= ((DATEADD('month', -3, DATE_TRUNC('month', CURRENT_DATE())))) AND
+            WI.DATE_CREATED < ((DATEADD('month', 4, DATEADD('month', -3, DATE_TRUNC('month', CURRENT_DATE())))))))))
+       AND edd.USER_PROFILE_ID NOT IN (26386020, 47855)
+       AND ((edd."CASE_CREATION_TIME" >= ((DATEADD('month', -3, DATE_TRUNC('month', CURRENT_DATE())))) AND
+        edd."CASE_CREATION_TIME" < ((DATEADD('month', 4, DATEADD('month', -3, DATE_TRUNC('month', CURRENT_DATE())))))))
+GROUP BY 2, 1, 3
+ORDER BY 3 DESC;
