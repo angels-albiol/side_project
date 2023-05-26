@@ -1,0 +1,7 @@
+SELECT 
+   DISTINCT t.user_id,
+   u.active
+FROM reports.user_tag_facts t
+JOIN fx.user u ON t.user_id = u.id
+WHERE t.tag_name = 'aml-kyc-pep'
+ORDER BY 1;
