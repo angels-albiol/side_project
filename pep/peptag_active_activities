@@ -1,0 +1,14 @@
+WITH activities AS (
+      SELECT DISTINCT user_id,
+      MAX(action_creation_time) AS last_activity
+      FROM reports.report_action_step
+      WHERE action_creation_time  > current_date - interval '12 month'
+      GROUP BY 1)
+SELECT 
+   DISTINCT t.user_id,
+   a.last_activity,
+   CASE WHEN a.last_activity IS NULL THEN 'NO' ELSE 'YES' END AS Activities
+FROM reports.user_tag_facts t
+JOIN fx.user u ON t.user_id = u.id
+LEFT JOIN activities a ON u.id = a.user_id
+WHERE t.tag_name = 'aml-kyc-pep' AND u.active = true ;
