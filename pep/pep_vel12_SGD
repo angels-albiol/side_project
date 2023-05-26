@@ -1,0 +1,18 @@
+with reviews_past_12_months as
+    ( select USER_ID,
+             max(case when edd_rule ilike '%confirmedpep%' or edd_rule ilike '%velocityrule%' then CASE_CREATION_TIME else null end) as pep_review_time
+             from reports.META_EDD_INVESTIGATIONS_OPS_REVIEW
+    where case_creation_time >= DATEADD('month', -12, DATE_TRUNC('month', CURRENT_DATE() )) group by 1
+        )
+SELECT
+   DISTINCT tags.user_id AS user_id,
+    tags.TAG_ADDED as tag_added_time,
+    rev.pep_review_time,
+    CASE WHEN rev.pep_review_time IS NOT NULL THEN 'YES' ELSE 'NO' END AS confirmedpep_rev
+FROM reports.user_tag_facts AS tags
+LEFT JOIN reviews_past_12_months AS rev ON rev.USER_ID = tags.USER_ID
+LEFT JOIN reports.META_EDD_INVESTIGATIONS_OPS_REVIEW AS edd_rev ON edd_rev.user_id = tags.user_id
+LEFT JOIN transfer.transfer AS transfer ON transfer.user_id = tags.user_id
+LEFT JOIN reports.report_action_step AS report_action ON report_action.user_id = tags.user_id
+WHERE tags.tag_name = 'aml-kyc-pep' AND (edd_rev.user_proflie_address_country = 'sgp' OR 
+    (transfer.source_currency = 'SGD' AND report_action.product_type = 'SENDMONEY'));
