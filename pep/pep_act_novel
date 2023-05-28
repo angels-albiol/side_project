@@ -1,0 +1,22 @@
+WITH reviews_past_12_months AS (
+            SELECT USER_ID,
+             MAX(case when edd_rule ilike '%confirmedpep%' or edd_rule ilike '%velocityrule%' then CASE_CREATION_TIME else null end) as pep_review_time
+             FROM reports.META_EDD_INVESTIGATIONS_OPS_REVIEW
+    WHERE case_creation_time >= DATEADD('month', -12, DATE_TRUNC('month', CURRENT_DATE() )) group by 1
+        ),
+activities AS (
+      SELECT DISTINCT user_id,
+      MAX(action_creation_time) AS last_activity
+      FROM reports.report_action_step
+      WHERE action_creation_time  >= DATEADD('month', -12, DATE_TRUNC('month', CURRENT_DATE() ))
+      GROUP BY 1
+      )
+SELECT
+   DISTINCT t.user_id,
+   a.last_activity,
+   CASE WHEN a.last_activity IS NULL THEN 'NO' ELSE 'YES' END AS Activities
+FROM reports.user_tag_facts t
+LEFT JOIN reviews_past_12_months rev on rev.user_id = t.user_id
+LEFT JOIN activities a ON t.user_id = a.user_id
+WHERE t.tag_name = 'aml-kyc-pep'
+        AND rev.pep_review_time IS NULL;
