@@ -1,0 +1,11 @@
+SELECT skm.keyword,
+skm.suspicious_keyword_id,
+count (rr.object_id) num_transfers
+FROM EDD.RULE_RESULT rr 
+JOIN edd_clear.suspicious_keyword_match skm ON rr.edd_check_id = skm.edd_check_id
+where rr.TIME_CREATED >= '2022-09-13'
+AND rr.rule = 'SuspiciousKeywordRule'
+AND rr.REASON = 'SUSPICIOUS_KEYWORD'
+AND skm.check_reference_type ilike '%RECIPIENT_NAME'
+group by 2, 1
+order by 3 desc;
