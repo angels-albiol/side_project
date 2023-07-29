@@ -1,0 +1,17 @@
+select t.ticket_id,
+t.user_id,
+t.ticket_status,
+t.created_at,
+t.ticket_tags,
+a.comment_count,
+    case WHEN t.TICKET_TAGS ilike '%edd-russian-closure%' THEN 'BL'
+        WHEN t.TICKET_TAGS ILIKE '%velocity%' then 'velocity'
+        WHEN t.TICKET_TAGS ILIKE '%hr3c%' then 'hr3c'
+        WHEN t.TICKET_TAGS ILIKE '%preemptive-aup%' then 'aup preemptive'
+        WHEN t.TICKET_TAGS ILIKE '%suspicious-keywords%' then 'suskey'
+        else 'Surveillance' end Rule_type
+from reports.zendesk_tickets t
+left join reports.contact_attribution a ON t.ticket_id = a.ticket_id
+where t.group_name ilike 'Surveillance'
+and t.CREATED_AT >= '2023-01-01'
+order by t.CREATED_AT desc;
