@@ -1,4 +1,4 @@
-SELECT distinct mc.user_id,
+SELECT mc.user_id,
 skm.keyword,
 skm.suspicious_keyword_id,
 skm.check_reference_type,
@@ -9,12 +9,12 @@ FROM EDD.RULE_RESULT rr
     JOIN ddcase.DD_CASE_WORKLOAD dd ON dd.reference_id = rr.object_id
     JOIN reports.META_EDD_INVESTIGATIONS_CASE mc ON dd.case_id = mc.case_id
     JOIN TRANSFER.TRANSFER t ON rr.OBJECT_ID = t.ID
-    JOIN FX_CLEAR.RECIPIENT rec ON t.TARGET_RECIPIENT_ID = rec.ID
 where 1 = 1
-    AND rr.TIME_CREATED >= '2022-09-13'
+    AND rr.TIME_CREATED BETWEEN '2022-09-13' AND '2023-08-10'
     AND rr.rule = 'SuspiciousKeywordRule'
     AND rr.REASON = 'SUSPICIOUS_KEYWORD'
+    AND mc.CASE_STATE = 'APPROVED'
     AND dd.REFERENCE_CATEGORY = 'TRANSFER'
 group by 1, 2, 3, 4
-having count(distinct dd.CASE_ID) >= 4
+having count(distinct dd.CASE_ID) >= 3
 ORDER BY 5 DESC;
