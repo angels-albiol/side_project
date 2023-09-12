@@ -1,0 +1,44 @@
+WITH data_agg AS (
+    SELECT DISTINCT mc.user_id,
+                    skm.keyword,
+                    skm.check_reference_type,
+                    dd.case_id,
+                    mc.TOTAL_ASSOCIATED_FUNDS_GBP,
+                    mc.CASE_CREATION_TIME
+    FROM EDD.RULE_RESULT rr
+             JOIN reports.report_action_step ras ON rr.object_id = ras.request_id
+             JOIN EDD_CLEAR.suspicious_keyword_match skm ON rr.edd_check_id = skm.edd_check_id
+             JOIN ddcase.DD_CASE_WORKLOAD dd ON dd.reference_id = rr.object_id
+             JOIN reports.META_EDD_INVESTIGATIONS_CASE mc ON dd.case_id = mc.case_id
+             JOIN TRANSFER.TRANSFER t ON rr.OBJECT_ID = t.ID
+             JOIN FX_CLEAR.RECIPIENT rec ON t.TARGET_RECIPIENT_ID = rec.ID
+    where 1 = 1
+      AND rr.TIME_CREATED BETWEEN '2022-09-13' AND '2023-08-10'
+      AND rr.rule = 'SuspiciousKeywordRule'
+      AND rr.REASON = 'SUSPICIOUS_KEYWORD'
+      AND mc.CASE_STATE = 'APPROVED'
+      AND dd.REFERENCE_CATEGORY = 'TRANSFER'
+),
+    false_pos AS (
+    SELECT *
+    FROM data_agg
+    QUALIFY row_number() OVER (PARTITION BY user_id, KEYWORD, CHECK_REFERENCE_TYPE ORDER BY CASE_CREATION_TIME DESC) >= 3
+ ),
+
+ first_transfers AS (SELECT *
+                     FROM data_agg
+                     QUALIFY row_number() OVER (PARTITION BY user_id, KEYWORD, CHECK_REFERENCE_TYPE ORDER BY CASE_CREATION_TIME DESC) > 1
+),
+ funds as (select USER_ID,
+                  sum(TOTAL_ASSOCIATED_FUNDS_GBP) as funds
+           from first_transfers
+           group by 1
+           ),
+false_pos_less_1 AS (
+SELECT distinct false_pos.user_id,
+    funds.funds
+FROM false_pos
+JOIN funds on false_pos.user_id = funds.user_id
+)
+Select round(sum(funds), 2) as funds_on_hold
+from false_pos_less_1;
