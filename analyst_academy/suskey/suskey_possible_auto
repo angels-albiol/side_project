@@ -4,17 +4,24 @@ mc.user_id,
 skm.keyword,
 skm.suspicious_keyword_id,
 skm.check_reference_type,
-ras.description
-FROM EDD.RULE_RESULT rr 
+ras.description,
+rec.NAME
+FROM EDD.RULE_RESULT rr
     JOIN reports.report_action_step ras ON rr.object_id = ras.request_id
     JOIN edd_clear.suspicious_keyword_match skm ON rr.edd_check_id = skm.edd_check_id
     JOIN ddcase.DD_CASE_WORKLOAD dd ON dd.reference_id = rr.object_id
     JOIN reports.META_EDD_INVESTIGATIONS_CASE mc ON dd.case_id = mc.case_id
+    JOIN TRANSFER.TRANSFER t ON rr.OBJECT_ID = t.ID
+    JOIN FX_CLEAR.RECIPIENT rec ON t.TARGET_RECIPIENT_ID = rec.ID
 where 1 = 1
     AND rr.TIME_CREATED >= '2022-09-13'
     AND rr.rule = 'SuspiciousKeywordRule'
     AND rr.REASON = 'SUSPICIOUS_KEYWORD'
-    AND (skm.check_reference_type ILIKE '%RECIPIENT_NAME' OR skm.check_reference_type = 'SENDER_BANK_NAME')
+    AND skm.check_reference_type LIKE ANY ('%RECIPIENT_NAME', 'SENDER_BANK_NAME')
     AND dd.REFERENCE_CATEGORY = 'TRANSFER'
     AND ras.description != 'Balance Deposit From Self'
-ORDER BY case_id;
+    AND skm.keyword LIKE ANY ('Paxos', 'uphold', 'Itbit', 'crypto', 'gambling', 'coinbase', 'gatehub', 'bitflyer',
+                        'Bitcoinforme SL', 'paxful', 'acecosm', 'bitfinex', 'kraken', 'swissborg', 'Swyftx',
+                        'Transactive', 'payward', 'huobi', 'bittrex', 'Key Vision Development Limited', 'bitpanda',
+                        'Bity SA', 'tracle', 'binance', 'nexo', 'BFXWW Inc')
+ORDER BY dd.case_id;
